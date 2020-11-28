@@ -3,12 +3,13 @@ const router = express.Router();
 const jwt = require("jsonwebtoken");
 const users = require("../model/users");
 const bcrypt = require("bcryptjs");
-const { createUserValidation } = require("../validation");
+const { registerValidation } = require("../validation");
+const { route } = require(".");
 
 /* GET users listing. */
 router.post("/register", async (req, res, next) => {
   // Validate
-  const validation = createUserValidation(req.body);
+  const validation = registerValidation(req.body);
   if (validation.hasOwnProperty("error"))
     return res.status(400).send(validation.error.details[0].message);
   else {
@@ -37,6 +38,20 @@ router.post("/register", async (req, res, next) => {
       res.status(400).send(error);
     }
   }
+});
+
+router.post("/login", async (req, res) => {
+  // Check Exist Email
+  const user = await users.findOne({ email: req.body.email });
+  if (!user) return res.status(400).send("Email or Password is wrong");
+
+  // Check Password
+  const validPass = await bcrypt.compare(req.body.password, user.password);
+  if (!validPass) return res.status(400).send("Email or Password is wrong");
+
+  // Create Token
+  const token = jwt.sign({ _id: user._id }, process.env.SECRET_KEY, { expiresIn: '7d' });
+  res.header('authorization', token).send(token);
 });
 
 module.exports = router;

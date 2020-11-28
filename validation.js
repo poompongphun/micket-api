@@ -1,6 +1,6 @@
 const Joi = require("@hapi/joi");
 
-const createUserValidation = data => {
+const registerValidation = (data) => {
   const schema = Joi.object({
     username: Joi.string().min(4).required(),
     name: Joi.string().min(4).required(),
@@ -10,4 +10,5 @@ const createUserValidation = data => {
   return schema.validate(data);
 };
 
-module.exports.createUserValidation = createUserValidation
+
+module.exports.registerValidation = registerValidation;
