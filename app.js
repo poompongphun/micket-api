@@ -24,9 +24,10 @@ dotenv.config();
 // connect to database
 mongoose.connect(
   process.env.DB_CONNECT,
-  { useUnifiedTopology: true, useNewUrlParser: true, useCreateIndex: true },
-  () => console.log("Connected to database")
-);
+  { useUnifiedTopology: true, useNewUrlParser: true, useCreateIndex: true }
+).then(() => {
+  console.log("Connected to database");
+}).catch(error => handleError(error));;
 
 // Import Route
 const indexRouter = require("./routes/index");
