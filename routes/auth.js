@@ -6,7 +6,7 @@ const bcrypt = require("bcryptjs");
 const { createUserValidation } = require("../validation");
 
 /* GET users listing. */
-router.post("/", async (req, res, next) => {
+router.post("/register", async (req, res, next) => {
   // Validate
   const validation = createUserValidation(req.body);
   if (validation.hasOwnProperty("error"))
