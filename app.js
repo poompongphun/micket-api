@@ -27,7 +27,7 @@ mongoose.connect(
   { useUnifiedTopology: true, useNewUrlParser: true, useCreateIndex: true }
 ).then(() => {
   console.log("Connected to database");
-}).catch(error => handleError(error));;
+}).catch((error) => console.log(error));
 
 // Import Route
 const indexRouter = require("./routes/index");
