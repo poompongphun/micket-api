@@ -31,10 +31,12 @@ mongoose.connect(
 
 // Import Route
 const indexRouter = require("./routes/index");
-const usersRouter = require("./routes/auth");
+const authRouter = require("./routes/auth");
+const usersRouter = require("./routes/users");
 
 app.use("/", indexRouter);
-app.use("/api/auth", usersRouter);
+app.use("/api/auth", authRouter);
+app.use("/api/users", usersRouter);
 
 // catch 404 and forward to error handler
 app.use(function (req, res, next) {
