@@ -13,9 +13,14 @@ router.post("/register", async (req, res, next) => {
   if (validation.hasOwnProperty("error"))
     return res.status(400).send(validation.error.details[0].message);
   else {
+    // Format Data
+    const usernameFormat = await req.body.username.toLowerCase()
+    const emailFormat = await req.body.email.toLowerCase()
+    const nameFormat = await req.body.name.replace( /  +/g, ' ' )
+
     // check duplicate email
-    const emailExist = await users.findOne({ email: req.body.email });
-    const usernameExist = await users.findOne({ username: req.body.username });
+    const emailExist = await users.findOne({ email: emailFormat });
+    const usernameExist = await users.findOne({ username: usernameFormat });
     if (emailExist) return res.status(400).send("Email already exists");
     else if (usernameExist)
       return res.status(400).send("Username already exists");
@@ -26,9 +31,9 @@ router.post("/register", async (req, res, next) => {
 
     // Create new user
     const user = new users({
-      username: req.body.username,
-      name: req.body.name,
-      email: req.body.email,
+      username: usernameFormat,
+      name: nameFormat,
+      email: emailFormat,
       password: hashedPassword,
     });
     try {
