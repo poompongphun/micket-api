@@ -12,7 +12,6 @@ router.post("/register", async (req, res, next) => {
   if (validation.hasOwnProperty("error"))
     return res.status(400).send(validation.error.details[0].message);
   else {
-
     // check duplicate email / username
     const emailExist = await users.findOne({ email: validation.value.email });
     const usernameExist = await users.findOne({
@@ -55,7 +54,12 @@ router.post("/login", async (req, res) => {
   const token = jwt.sign({ _id: user._id }, process.env.SECRET_KEY, {
     expiresIn: "7d",
   });
-  res.header("authorization", token).send(token);
+
+  // remove password (hide password) before send
+  const removeKey = ["password", "__v"];
+  removeKey.forEach((key) => (user[key] = undefined));
+
+  res.header("authorization", token).send({ user: user, access_token: token });
 });
 
 module.exports = router;
