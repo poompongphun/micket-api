@@ -66,4 +66,20 @@ router.post("/login", async (req, res) => {
   } else return res.status(400).send(errorMessage);
 });
 
+/* GET Check Duplicate Username */
+router.get("/username", async (req, res) => {
+  const user = await users.findOne({ username: req.query.search });
+  if (user) {
+    res.json({ isAvailable: false });
+  } else res.json({ isAvailable: true });
+});
+
+/* GET Check Duplicate Email */
+router.get("/email", async (req, res) => {
+  const email = await users.findOne({ email: req.query.search });
+  if (email) {
+    res.json({ isAvailable: false });
+  } else res.json({ isAvailable: true });
+});
+
 module.exports = router;
