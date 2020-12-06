@@ -42,24 +42,28 @@ router.post("/register", async (req, res, next) => {
 });
 
 router.post("/login", async (req, res) => {
+  const errorMessage = "Email or Password is wrong";
   // Check Exist Email
   const user = await users.findOne({ email: req.body.email });
-  if (!user) return res.status(400).send("Email or Password is wrong");
+  if (user) {
+    // Check Password
+    const validPass = await bcrypt.compare(req.body.password, user.password);
+    if (validPass) {
+      // Create Token
+      const token = jwt.sign({ _id: user._id }, process.env.SECRET_KEY, {
+        expiresIn: "7d",
+      });
 
-  // Check Password
-  const validPass = await bcrypt.compare(req.body.password, user.password);
-  if (!validPass) return res.status(400).send("Email or Password is wrong");
+      // remove password (hide password) before send
+      const removeKey = ["password", "__v"];
+      removeKey.forEach((key) => (user[key] = undefined));
 
-  // Create Token
-  const token = jwt.sign({ _id: user._id }, process.env.SECRET_KEY, {
-    expiresIn: "7d",
-  });
-
-  // remove password (hide password) before send
-  const removeKey = ["password", "__v"];
-  removeKey.forEach((key) => (user[key] = undefined));
-
-  res.header("authorization", token).send({ user: user, access_token: token });
+      // send user detail and token after login success
+      res
+        .header("authorization", token)
+        .send({ user: user, access_token: token });
+    } else return res.status(400).send(errorMessage);
+  } else return res.status(400).send(errorMessage);
 });
 
 module.exports = router;
