@@ -1,3 +1,4 @@
+const { boolean } = require("@hapi/joi");
 const mongoose = require("mongoose");
 
 const userSchema = new mongoose.Schema({
@@ -29,6 +30,11 @@ const userSchema = new mongoose.Schema({
     type: Number,
     required: false,
     default: 0,
+  },
+  creator: {
+    type: Boolean,
+    required: true,
+    default: false,
   },
   join_date: {
     type: Date,

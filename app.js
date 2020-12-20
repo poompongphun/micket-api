@@ -40,11 +40,13 @@ const indexRouter = require("./routes/index");
 const authRouter = require("./routes/auth");
 const usersRouter = require("./routes/users");
 const walletRouter = require("./routes/wallet");
+const creatorRouter = require("./routes/creator");
 
 app.use("/", indexRouter);
 app.use("/api/auth", authRouter);
 app.use("/api/users", usersRouter);
 app.use("/api/wallet", walletRouter);
+app.use("/api/creator", creatorRouter);
 
 // catch 404 and forward to error handler
 app.use(function (req, res, next) {
