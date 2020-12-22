@@ -1,11 +1,11 @@
 const jwt = require("jsonwebtoken");
 
 module.exports = function (req, res, next) {
-  const splitToken = req.header("authorization").split(" ");
-  const token = splitToken[1];
-  if (!token) return res.status(401).send("Access Denied");
-
   try {
+    const splitToken = req.header("authorization").split(" ");
+    const token = splitToken[1];
+    if (!token) return res.status(401).send("Access Denied");
+
     const verified = jwt.verify(token, process.env.SECRET_KEY);
     req.user = verified;
     next();
