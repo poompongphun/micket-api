@@ -1,6 +1,6 @@
 const mongoose = require("mongoose");
 
-const movieSchema = new mongoose.Schema({
+const movieGroupSchema = new mongoose.Schema({
   user_id: {
     type: String,
     required: true,
@@ -12,13 +12,12 @@ const movieSchema = new mongoose.Schema({
     min: 4,
     max: 255,
   },
+  description: {
+    type: String,
+    required: false,
+    max: 1024,
+  },
   detail: {
-    description: {
-      type: String,
-      required: false,
-      min: 4,
-      max: 1024,
-    },
     creator: {
       type: Array,
       required: false,
@@ -44,37 +43,15 @@ const movieSchema = new mongoose.Schema({
     type: Object,
     required: false,
   },
-  poster: {
-    img_desktop: {
-      type: String,
-      required: false,
-    },
-    img_mobile: {
-      type: String,
-      required: false,
-    },
-  },
-  video: {
-    url: {
-      type: String,
-      required: true,
-      immutable: true,
-    },
-    path: {
-      type: String,
-      required: true,
-      immutable: true,
-    },
-  },
   public: {
     type: Boolean,
     required: false,
     default: false,
   },
-  release_date: {
+  create_date: {
     type: Date,
     default: Date.now(),
   },
 });
 
-module.exports = mongoose.model("movie", movieSchema);
+module.exports = mongoose.model("movieGroup", movieGroupSchema);

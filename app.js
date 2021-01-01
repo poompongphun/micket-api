@@ -40,13 +40,17 @@ const indexRouter = require("./routes/index");
 const authRouter = require("./routes/auth");
 const usersRouter = require("./routes/users");
 const walletRouter = require("./routes/wallet");
-const creatorRouter = require("./routes/creator");
+const creatorJoinRouter = require("./routes/creator/join");
+const creatorMovieGroupRouter = require("./routes/creator/movieGroup");
+const creatorUploadRouter = require("./routes/creator/upload");
 
 app.use("/", indexRouter);
 app.use("/api/auth", authRouter);
 app.use("/api/users", usersRouter);
 app.use("/api/wallet", walletRouter);
-app.use("/api/creator", creatorRouter);
+app.use("/api/creator/join", creatorJoinRouter);
+app.use("/api/creator/movie-group", creatorMovieGroupRouter);
+app.use("/api/creator/upload", creatorUploadRouter);
 
 // catch 404 and forward to error handler
 app.use(function (req, res, next) {
