@@ -63,10 +63,11 @@ router.post("/posterX/:id", verifyCreator, async (req, res) => {
             res.status(405).json(error);
           });
           blobStream.on("finish", () => {
-            fileUpload.download().then((img) => {
-              res.writeHead(200, { "Content-Type": "image/webp" });
-              res.end(img[0], "binary");
-            });
+            res.send({ img: fileUpload.publicUrl() + "?" + Math.random() });
+            // fileUpload.download().then((img) => {
+            //   res.writeHead(200, { "Content-Type": "image/webp" });
+            //   res.end(img[0], "binary");
+            // });
           });
           blobStream.end(img);
         }
@@ -114,10 +115,11 @@ router.post("/posterY/:id", verifyCreator, async (req, res) => {
             res.status(405).json(error);
           });
           blobStream.on("finish", () => {
-            fileUpload.download().then((img) => {
-              res.writeHead(200, { "Content-Type": "image/webp" });
-              res.end(img[0], "binary");
-            });
+            res.send({ img: fileUpload.publicUrl() + "?" + Math.random() });
+            // fileUpload.download().then((img) => {
+            //   res.writeHead(200, { "Content-Type": "image/webp" });
+            //   res.end(img[0], "binary");
+            // });
           });
           blobStream.end(img);
         }
