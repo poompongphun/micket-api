@@ -43,7 +43,7 @@ router.post("/posterX/:id", verifyCreator, async (req, res) => {
           res.status(405).json({ error });
         } else {
           const img = await sharp(req.file.buffer)
-            .resize(1920, 1080)
+            .resize(720, 480)
             .webp({
               quality: 20,
               chromaSubsampling: "4:4:4",
@@ -63,13 +63,9 @@ router.post("/posterX/:id", verifyCreator, async (req, res) => {
             res.status(405).json(error);
           });
           blobStream.on("finish", () => {
-            fileUpload.download().then(async (img) => {
-              const image = await sharp(img[0])
-                .resize(640, 360)
-                .webp()
-                .toBuffer();
+            fileUpload.download().then((img) => {
               res.writeHead(200, { "Content-Type": "image/webp" });
-              res.end(image, "binary");
+              res.end(img[0], "binary");
             });
           });
           blobStream.end(img);
@@ -98,7 +94,7 @@ router.post("/posterY/:id", verifyCreator, async (req, res) => {
           res.status(405).json({ error });
         } else {
           const img = await sharp(req.file.buffer)
-            .resize(1080, 1600)
+            .resize(486, 720)
             .webp({
               quality: 20,
               chromaSubsampling: "4:4:4",
@@ -118,13 +114,9 @@ router.post("/posterY/:id", verifyCreator, async (req, res) => {
             res.status(405).json(error);
           });
           blobStream.on("finish", () => {
-            fileUpload.download().then(async (img) => {
-              const image = await sharp(img[0])
-                .resize(648, 960)
-                .webp()
-                .toBuffer();
+            fileUpload.download().then((img) => {
               res.writeHead(200, { "Content-Type": "image/webp" });
-              res.end(image, "binary");
+              res.end(img[0], "binary");
             });
           });
           blobStream.end(img);
