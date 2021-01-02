@@ -102,35 +102,36 @@ router.get("/poster/:id/:type", async (req, res) => {
     const fileName = req.params.type === "x" ? "posterX.webp" : "posterY.webp";
     const path = `${folder}/${id}/poster/${fileName}`;
     const fileUpload = bucket.file(path);
-    fileUpload
-      .download()
-      .then(async (img) => {
-        const size =
-          req.query.size === "xs"
-            ? 0.1
-            : req.query.size === "sm"
-            ? 0.3
-            : req.query.size === "md"
-            ? 0.5
-            : req.query.size === "xl"
-            ? 0.7
-            : 1;
-        const image = await sharp(img[0])
-          .metadata()
-          .then(({ width }) =>
-            sharp(img[0])
-              .resize(Math.round(width * size))
-              .webp()
-              .toBuffer()
-          );
-        res.writeHead(200, { "Content-Type": "image/webp" });
-        res.end(image, "binary");
-      })
-      .catch((error) => {
-        const image = fs.readFileSync("public/images/Micket.svg");
-        res.writeHead(200, { "Content-Type": "image/svg+xml" });
-        res.end(image, "binary");
-      });
+    res.send({ img: fileUpload.publicUrl() + "?" + Math.random() });
+    // fileUpload
+    //   .download()
+    //   .then(async (img) => {
+    //     const size =
+    //       req.query.size === "xs"
+    //         ? 0.1
+    //         : req.query.size === "sm"
+    //         ? 0.3
+    //         : req.query.size === "md"
+    //         ? 0.5
+    //         : req.query.size === "xl"
+    //         ? 0.7
+    //         : 1;
+    //     const image = await sharp(img[0])
+    //       .metadata()
+    //       .then(({ width }) =>
+    //         sharp(img[0])
+    //           .resize(Math.round(width * size))
+    //           .webp()
+    //           .toBuffer()
+    //       );
+    //     res.writeHead(200, { "Content-Type": "image/webp" });
+    //     res.end(image, "binary");
+    //   })
+    //   .catch((error) => {
+    //     const image = fs.readFileSync("public/images/Micket.svg");
+    //     res.writeHead(200, { "Content-Type": "image/svg+xml" });
+    //     res.end(image, "binary");
+    //   });
   } else {
     res.status(400).send("not found");
   }
