@@ -26,106 +26,96 @@ const { firebaseApp } = require("../../firebaseConfig");
 const storage = firebaseApp.storage();
 const bucket = storage.bucket();
 
-/* Update Horizon Poster. */
-router.post("/posterX/:id", verifyCreator, async (req, res) => {
-  try {
-    const response = await movieGroup.findOne({
-      _id: req.params.id,
-      user_id: req.user._id,
-    });
-    if (response) {
-      uploadPoster(req, res, async (error) => {
-        if (error instanceof multer.MulterError) {
-          // A Multer error occurred when uploading.
-          res.status(405).json({ error });
-        } else if (error) {
-          // An unknown error occurred when uploading.
-          res.status(405).json({ error });
-        } else {
-          const img = await sharp(req.file.buffer)
-            .resize(720, 480)
-            .webp({
-              quality: 20,
-              chromaSubsampling: "4:4:4",
-            })
-            .toBuffer();
-          const folder = "movie";
-          const id = response._id;
-          const fileName = `posterX.webp`;
-          const path = `${folder}/${id}/poster/${fileName}`;
-          const fileUpload = bucket.file(path);
-          const blobStream = fileUpload.createWriteStream({
-            metadata: {
-              contentType: "image/webp",
-            },
-          });
-          blobStream.on("error", (error) => {
-            res.status(405).json(error);
-          });
-          blobStream.on("finish", () => {
-            res.send({ img: fileUpload.publicUrl() + "?" + Math.random() });
-            // fileUpload.download().then((img) => {
-            //   res.writeHead(200, { "Content-Type": "image/webp" });
-            //   res.end(img[0], "binary");
-            // });
-          });
-          blobStream.end(img);
-        }
+/* Upload Poster Images. */
+router.post("/poster/:id/:type", verifyCreator, async (req, res) => {
+  const type = req.params.type;
+  if (type === "x" || type === "y") {
+    const isX = type === "x";
+    try {
+      const response = await movieGroup.findOne({
+        _id: req.params.id,
+        user_id: req.user._id,
       });
-    }
-  } catch (error) {
-    res.status(400).send("not found");
-  }
-});
+      if (response) {
+        uploadPoster(req, res, async (error) => {
+          if (error instanceof multer.MulterError) {
+            // A Multer error occurred when uploading.
+            res.status(405).json({ error });
+          } else if (error) {
+            // An unknown error occurred when uploading.
+            res.status(405).json({ error });
+          } else {
+            const width = isX ? 720 : 486;
+            const height = isX ? 480 : 720;
+            const file = req.file.buffer;
+            const sharpOption = {
+              quality: 25,
+              chromaSubsampling: "4:4:4",
+            };
+            const img = await sharp(file)
+              .resize(width, height)
+              .webp(sharpOption)
+              .toBuffer();
 
-// Update Vertical Poster
-router.post("/posterY/:id", verifyCreator, async (req, res) => {
-  try {
-    const response = await movieGroup.findOne({
-      _id: req.params.id,
-      user_id: req.user._id,
-    });
-    if (response) {
-      uploadPoster(req, res, async (error) => {
-        if (error instanceof multer.MulterError) {
-          // A Multer error occurred when uploading.
-          res.status(405).json({ error });
-        } else if (error) {
-          // An unknown error occurred when uploading.
-          res.status(405).json({ error });
-        } else {
-          const img = await sharp(req.file.buffer)
-            .resize(486, 720)
-            .webp({
-              quality: 20,
-              chromaSubsampling: "4:4:4",
-            })
-            .toBuffer();
-          const folder = "movie";
-          const id = response._id;
-          const fileName = `posterY.webp`;
-          const path = `${folder}/${id}/poster/${fileName}`;
-          const fileUpload = bucket.file(path);
-          const blobStream = fileUpload.createWriteStream({
-            metadata: {
-              contentType: "image/webp",
-            },
-          });
-          blobStream.on("error", (error) => {
-            res.status(405).json(error);
-          });
-          blobStream.on("finish", () => {
-            res.send({ img: fileUpload.publicUrl() + "?" + Math.random() });
-            // fileUpload.download().then((img) => {
-            //   res.writeHead(200, { "Content-Type": "image/webp" });
-            //   res.end(img[0], "binary");
-            // });
-          });
-          blobStream.end(img);
-        }
-      });
+            const folder = "movie";
+            const id = response._id;
+            const fileName = `${Date.now()}.webp`;
+            const path = `${folder}/${id}/poster/${fileName}`;
+            const fileUpload = bucket.file(path);
+            const blobStream = fileUpload.createWriteStream({
+              metadata: {
+                contentType: "image/webp",
+              },
+            });
+
+            blobStream.on("error", (error) => {
+              res.status(405).json(error);
+            });
+
+            blobStream.on("finish", async () => {
+              const url = fileUpload.publicUrl();
+              const posterSend = isX
+                ? { "poster.x": url }
+                : { "poster.y": url };
+
+              try {
+                const updateResponse = await movieGroup.findByIdAndUpdate(
+                  response._id,
+                  { $set: posterSend },
+                  {
+                    new: true,
+                  }
+                );
+
+                if (updateResponse) {
+                  const oldUrl = isX ? response.poster.x : response.poster.y;
+                  if (oldUrl !== "") {
+                    const web =
+                      "https://storage.googleapis.com/micket-d452e.appspot.com/";
+                    const removePath = oldUrl.replace(web, "");
+                    const removeFile = bucket.file(removePath);
+                    removeFile
+                      .delete()
+                      .then(() => {
+                        res.json(updateResponse);
+                      })
+                      .catch((error) => res.status(500).send(error));
+                  } else res.json(updateResponse);
+                }
+              } catch (error) {
+                res.status(500).send(error);
+              }
+            });
+            blobStream.end(img);
+          }
+        });
+      } else {
+        res.status(400).send("not found");
+      }
+    } catch (error) {
+      res.status(400).send("not found");
     }
-  } catch (error) {
+  } else {
     res.status(400).send("not found");
   }
 });

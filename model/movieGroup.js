@@ -31,6 +31,18 @@ const movieGroupSchema = new mongoose.Schema({
       required: false,
     },
   },
+  poster: {
+    x: {
+      type: String,
+      required: false,
+      default: "",
+    },
+    y: {
+      type: String,
+      required: false,
+      default: "",
+    },
+  },
   price: {
     type: Number,
     required: false,
