@@ -11,9 +11,12 @@ const {
 
 // Model
 const movieGroup = require("../../model/movieGroup");
+const movieSeason = require("../../model/movieSeason");
+const movies = require("../../model/movie");
 
 // Firebase Setup
 const { firebaseApp } = require("../../firebaseConfig");
+const movie = require("../../model/movie");
 const storage = firebaseApp.storage();
 const bucket = storage.bucket();
 
@@ -23,20 +26,34 @@ router.get("/", verifyCreator, async (req, res) => {
   res.json(response);
 });
 
+// Get movie group by id
+router.get("/:id", verifyCreator, async (req, res) => {
+  const response = await movieGroup.findOne({
+    _id: req.params.id,
+    user_id: req.user._id,
+  });
+  res.json(response);
+});
+
 /* Create movie group. */
 router.post("/create", verifyCreator, async (req, res) => {
   const validation = movieGroupValidation(req.body);
   if (validation.hasOwnProperty("error"))
     return res.status(400).send(validation.error.details[0].message);
   else {
-    const movie = new movieGroup({
+    const createMovie = new movieGroup({
       user_id: req.user._id,
       title: validation.value.title,
       description: validation.value.description,
     });
     try {
-      const createUser = await movie.save();
-      res.status(200).send(createUser);
+      const movie = await createMovie.save();
+      const createSeason = new movieSeason({
+        user_id: req.user._id,
+        group_id: movie._id,
+      });
+      await createSeason.save();
+      res.status(200).send(movie);
     } catch (error) {
       res.status(400).send(error);
     }
@@ -71,7 +88,15 @@ router.delete("/:id", verifyCreator, async (req, res) => {
       _id: req.params.id,
       user_id: req.user._id,
     });
-    if (response) {
+    const responseSeason = await movieSeason.deleteMany({
+      group_id: req.params.id,
+      user_id: req.user._id,
+    });
+    const responseMovie = await movies.deleteMany({
+      group_id: req.params.id,
+      user_id: req.user._id,
+    });
+    if (response && responseSeason && responseMovie) {
       const folder = "movie";
       const id = response._id;
       console.log(id);

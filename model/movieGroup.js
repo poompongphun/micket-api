@@ -2,9 +2,10 @@ const mongoose = require("mongoose");
 
 const movieGroupSchema = new mongoose.Schema({
   user_id: {
-    type: String,
+    type: mongoose.Schema.Types.ObjectId,
     required: true,
     immutable: true,
+    ref: "users",
   },
   title: {
     type: String,
