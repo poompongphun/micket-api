@@ -28,11 +28,16 @@ router.get("/", verifyCreator, async (req, res) => {
 
 // Get movie group by id
 router.get("/:id", verifyCreator, async (req, res) => {
-  const response = await movieGroup.findOne({
-    _id: req.params.id,
-    user_id: req.user._id,
-  });
-  res.json(response);
+  try {
+    const response = await movieGroup.findOne({
+      _id: req.params.id,
+      user_id: req.user._id,
+    });
+    if (response) res.json(response);
+    else res.status(404).send("not found");
+  } catch (error) {
+    res.status(404).send("not found");
+  }
 });
 
 /* Create movie group. */

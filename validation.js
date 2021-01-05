@@ -57,7 +57,17 @@ const editMovieGroupValidation = (data) => {
   return schema.validate(data);
 };
 
+const movieValidation = (data) => {
+  const schema = Joi.object({
+    name: Joi.string().min(4).max(255).replace(/  +/g, " "),
+    price: Joi.number(),
+    public: Joi.boolean(),
+  });
+  return schema.validate(data);
+};
+
 module.exports.registerValidation = registerValidation;
 module.exports.editUserValidation = editUserValidation;
 module.exports.movieGroupValidation = movieGroupValidation;
 module.exports.editMovieGroupValidation = editMovieGroupValidation;
+module.exports.movieValidation = movieValidation;

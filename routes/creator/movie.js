@@ -3,6 +3,8 @@ const router = express.Router();
 const verifyCreator = require("../../Middleware/verifyCreator");
 const path = require("path");
 
+const { movieValidation } = require("../../validation");
+
 // Model
 const movie = require("../../model/movie");
 const movieGroup = require("../../model/movieGroup");
@@ -26,17 +28,21 @@ const { firebaseApp } = require("../../firebaseConfig");
 const storage = firebaseApp.storage();
 const bucket = storage.bucket();
 
-router.get("/:group_id", verifyCreator, async (req, res) => {
-  const response = await movieSeason
-    .find({
-      group_id: req.params.group_id,
-      user_id: req.user._id,
-    })
-    .populate("movie");
-  res.json(response);
+router.get("/group/:group_id", verifyCreator, async (req, res) => {
+  try {
+    const response = await movieSeason
+      .find({
+        group_id: req.params.group_id,
+        user_id: req.user._id,
+      })
+      .populate("movie");
+    res.json(response);
+  } catch (error) {
+    res.status(400).send(error);
+  }
 });
 
-/* Upload movie. */
+/* Upload movie by group id and season id. */
 router.post("/:id/:season", verifyCreator, async (req, res) => {
   try {
     const responseGroup = await movieGroup.findOne({
@@ -81,6 +87,7 @@ router.post("/:id/:season", verifyCreator, async (req, res) => {
               media: {
                 thumbnail: "",
                 video: url,
+                fileName: fileName,
               },
               public: false,
             };
@@ -115,6 +122,55 @@ router.post("/:id/:season", verifyCreator, async (req, res) => {
     } else res.status(400).send("not found group or season");
   } catch (error) {
     res.status(400).send("not found group");
+  }
+});
+
+// Delete by movie id
+router.delete("/:id", verifyCreator, async (req, res) => {
+  try {
+    const responseMovie = await movie.findByIdAndDelete(req.params.id);
+    if (responseMovie) {
+      const folder = "movie";
+      const fileName = responseMovie.media.fileName;
+      const path = `${folder}/${responseMovie.group_id}/vdo/${responseMovie.season_id}/${fileName}`;
+      const fileUpload = bucket.file(path);
+      fileUpload.delete().then(() => {
+        res.send("deleted");
+      });
+    } else res.status(400).send("not found movie");
+  } catch (error) {
+    res.status(400).send(error);
+  }
+});
+
+// Get Movie by id
+router.get("/:id", verifyCreator, async (req, res) => {
+  try {
+    const response = await movie.findById(req.params.id);
+    res.json(response);
+  } catch (error) {
+    res.status(400).send(error);
+  }
+});
+
+// Update movie by movie id
+router.patch("/:id", verifyCreator, async (req, res) => {
+  const validation = movieValidation(req.body);
+  if (validation.hasOwnProperty("error"))
+    return res.status(400).send(validation.error.details[0].message);
+  else {
+    try {
+      const movieResponse = await movie.findOneAndUpdate(
+        { _id: req.params.id, user_id: req.user._id },
+        validation.value,
+        {
+          new: true,
+        }
+      );
+      res.send(movieResponse);
+    } catch (error) {
+      res.status(400).send(error);
+    }
   }
 });
 

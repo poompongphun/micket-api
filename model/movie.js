@@ -37,7 +37,12 @@ const movieSchema = new mongoose.Schema({
     },
     video: {
       type: String,
-      required: false,
+      required: true,
+      immutable: true,
+    },
+    fileName: {
+      type: String,
+      required: true,
       immutable: true,
     },
   },
