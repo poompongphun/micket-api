@@ -32,7 +32,7 @@ const editUserValidation = (data) => {
 const movieGroupValidation = (data) => {
   const schema = Joi.object({
     title: Joi.string().min(4).max(255).replace(/  +/g, " ").required(),
-    description: Joi.string().max(1024).replace(/  +/g, " ").empty(""),
+    description: Joi.string().max(5000).replace(/  +/g, " ").empty(""),
   });
   return schema.validate(data);
 };
@@ -40,7 +40,7 @@ const movieGroupValidation = (data) => {
 const editMovieGroupValidation = (data) => {
   const schema = Joi.object({
     title: Joi.string().min(4).max(255).replace(/  +/g, " "),
-    description: Joi.string().max(1024).replace(/  +/g, " ").empty(""),
+    description: Joi.string().max(5000).replace(/  +/g, " ").empty(""),
     detail: Joi.object({
       creator: Joi.array().items(Joi.string().max(255).replace(/  +/g, " ")),
       star: Joi.array().items(Joi.string().max(255).replace(/  +/g, " ")),
@@ -50,7 +50,6 @@ const editMovieGroupValidation = (data) => {
     //   x: Joi.string().empty(""),
     //   y: Joi.string().empty(""),
     // }),
-    price: Joi.number().precision(2),
     discount: Joi.number().precision(2).max(100),
     public: Joi.boolean(),
   });

@@ -128,13 +128,22 @@ router.post("/:id/:season", verifyCreator, async (req, res) => {
 // Delete by movie id
 router.delete("/:id", verifyCreator, async (req, res) => {
   try {
-    const responseMovie = await movie.findByIdAndDelete(req.params.id);
+    const responseMovie = await movie.findOneAndDelete({
+      _id: req.params.id,
+      user_id: req.user._id,
+    });
     if (responseMovie) {
       const folder = "movie";
       const fileName = responseMovie.media.fileName;
       const path = `${folder}/${responseMovie.group_id}/vdo/${responseMovie.season_id}/${fileName}`;
       const fileUpload = bucket.file(path);
-      fileUpload.delete().then(() => {
+      fileUpload.delete().then(async () => {
+        const deleteInSeason = await movieSeason.findByIdAndUpdate(
+          responseMovie.season_id,
+          { $pull: { movie: responseMovie._id } },
+          { safe: true, upsert: true }
+        );
+        await updateGroupPrice(responseMovie.group_id);
         res.send("deleted");
       });
     } else res.status(400).send("not found movie");
@@ -167,12 +176,40 @@ router.patch("/:id", verifyCreator, async (req, res) => {
           new: true,
         }
       );
+
+      await updateGroupPrice(movieResponse.group_id);
+
       res.send(movieResponse);
     } catch (error) {
       res.status(400).send(error);
     }
   }
 });
+
+async function updateGroupPrice(groupId) {
+  try {
+    const findPrice = await movie
+      .find({
+        group_id: groupId,
+        public: true,
+      })
+      .select("price");
+    let initialValue = 0;
+    const sumPrice = findPrice.reduce((accumulator, currentValue) => {
+      return accumulator + currentValue.price;
+    }, initialValue);
+    const updatePrice = await movieGroup.findByIdAndUpdate(
+      groupId,
+      { price: sumPrice.toFixed(2) },
+      {
+        new: true,
+      }
+    );
+    if (!updatePrice) return false;
+  } catch (error) {
+    console.log(error);
+  }
+}
 
 function checkFileType(file, cb) {
   // Allowed ext

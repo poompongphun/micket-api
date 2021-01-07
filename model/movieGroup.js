@@ -47,10 +47,12 @@ const movieGroupSchema = new mongoose.Schema({
   price: {
     type: Number,
     required: false,
+    default: 0,
   },
   discount: {
     type: Number,
     required: false,
+    default: 0,
   },
   rating: {
     type: Object,
