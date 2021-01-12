@@ -1,16 +1,17 @@
 const express = require("express");
 const router = express.Router();
 const verify = require("../Middleware/verifyToken");
-const users = require("../model/users");
 const { editUserValidation } = require("../validation");
 const bcrypt = require("bcryptjs");
+
+// Model
+const users = require("../model/users");
+const movieSeason = require("../model/movieSeason");
 
 /* GET User data. */
 router.get("/me", verify, async (req, res, next) => {
   try {
-    const user = await users.findById(req.user._id);
-    const removeKey = ["password", "__v"];
-    removeKey.forEach((key) => (user[key] = undefined));
+    const user = await users.findById(req.user._id).select({ password: 0 });
     res.json(user);
   } catch (error) {
     res.status(400).send(error);
@@ -40,7 +41,7 @@ router.patch("/me", verify, async (req, res, next) => {
         salt
       );
     }
-    
+
     try {
       const user = await users.findByIdAndUpdate(
         req.user._id,
@@ -53,6 +54,36 @@ router.patch("/me", verify, async (req, res, next) => {
     } catch (error) {
       res.status(400).send(error);
     }
+  }
+});
+
+router.get("/me/library", verify, async (req, res) => {
+  try {
+    const library = await users
+      .findById(req.user._id)
+      .select("library")
+      .populate("library");
+    res.json(library);
+  } catch (error) {
+    res.status(400).send(error);
+  }
+});
+
+router.get("/me/library/:id", verify, async (req, res) => {
+  try {
+    const responseSeason = await movieSeason
+      .find({
+        group_id: req.params.id,
+      })
+      .populate({
+        path: "movie",
+        match: { purchase_user: { $all: req.user._id } },
+        select: { media: 1, name: 1 },
+      })
+      .select("name");
+    res.json(responseSeason);
+  } catch (error) {
+    res.status(400).send(error);
   }
 });
 

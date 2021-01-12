@@ -55,6 +55,14 @@ const movieSchema = new mongoose.Schema({
     type: Date,
     default: Date.now(),
   },
+  purchase_user: [
+    {
+      type: mongoose.Schema.Types.ObjectId,
+      required: true,
+      immutable: true,
+      ref: "users",
+    },
+  ],
 });
 
 module.exports = mongoose.model("movie", movieSchema);

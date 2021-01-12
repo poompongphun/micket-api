@@ -50,6 +50,7 @@ const movieRouter = require("./routes/creator/movie");
 
 // Store
 const storeMovieRouter = require("./routes/store/movie");
+const buyMovieRouter = require("./routes/store/buy");
 
 app.use("/", indexRouter);
 app.use("/api/auth", authRouter);
@@ -65,6 +66,7 @@ app.use("/api/creator/movie", movieRouter);
 
 //Store
 app.use("/api/store/movie", storeMovieRouter);
+app.use("/api/store/buy", buyMovieRouter);
 
 // catch 404 and forward to error handler
 app.use(function (req, res, next) {
