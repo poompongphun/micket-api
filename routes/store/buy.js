@@ -4,6 +4,7 @@ const verify = require("../../Middleware/verifyToken");
 
 // Model
 const movie = require("../../model/movie");
+const movieGroup = require("../../model/movieGroup");
 const users = require("../../model/users");
 const bill = require("../../model/bill");
 
@@ -63,7 +64,7 @@ router.post("/:id", verify, async (req, res) => {
         status: false,
       })
       .populate("user_id")
-      .populate("order");
+      .populate({ path: "order", populate: "user_id" });
     const user = bills.user_id;
     const order = bills.order;
 
@@ -107,7 +108,9 @@ router.post("/:id", verify, async (req, res) => {
           await users.findByIdAndUpdate(
             movieOrder.user_id,
             {
-              coins: parseFloat(user.coins + movieOrder.price).toFixed(2),
+              coins: parseFloat(
+                movieOrder.user_id.coins + movieOrder.price
+              ).toFixed(2),
             },
             {
               new: true,
@@ -127,6 +130,80 @@ router.post("/:id", verify, async (req, res) => {
         }
       );
       res.json(success);
+    } else {
+      res.status(400).send("You don't have enough coins");
+    }
+  } catch (error) {
+    res.status(400).json(error);
+  }
+});
+
+router.post("/group/:id", verify, async (req, res) => {
+  try {
+    const user = await users.findById(req.user._id);
+    const responseGroup = await movieGroup
+      .findById(req.params.id)
+      .populate("user_id");
+    const responseMovie = await movie.find({
+      group_id: responseGroup._id,
+      public: true,
+      purchase_user: { $ne: req.user._id },
+    });
+    // total price
+    const initialValue = 0;
+    const totalPrice = responseMovie.reduce((accumulator, currentValue) => {
+      return accumulator + currentValue.price;
+    }, initialValue);
+    const lessPrice = totalPrice - (responseGroup.discount / 100) * totalPrice;
+
+    if (user.coins >= lessPrice) {
+      const payMoney = await users.findByIdAndUpdate(
+        user._id,
+        {
+          coins: parseFloat(user.coins - lessPrice).toFixed(2),
+          $addToSet: {
+            library: responseGroup._id,
+          },
+        },
+        {
+          new: true,
+        }
+      );
+
+      const addPurchase = await movie.updateMany(
+        {
+          public: true,
+          group_id: responseGroup._id,
+        },
+        {
+          $addToSet: {
+            purchase_user: user._id,
+          },
+        }
+      );
+      // add money to movie creator
+      const addMoney = await users.findByIdAndUpdate(
+        responseGroup.user_id._id,
+        {
+          coins: parseFloat(responseGroup.user_id.coins + lessPrice).toFixed(2),
+        },
+        {
+          new: true,
+          useFindAndModify: false,
+        }
+      );
+      if (payMoney && addPurchase && addMoney) {
+        const createBill = new bill({
+          user_id: user._id,
+          order_group: responseGroup._id,
+          status: true,
+        });
+
+        const billSave = await createBill.save();
+        res.json(billSave);
+      } else {
+        res.status(400).send("error");
+      }
     } else {
       res.status(400).send("You don't have enough coins");
     }

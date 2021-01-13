@@ -10,10 +10,16 @@ const billSchema = new mongoose.Schema({
   order: [
     {
       type: mongoose.Schema.Types.ObjectId,
-      required: true,
+      required: false,
       ref: "movie",
     },
   ],
+  order_group: {
+    type: mongoose.Schema.Types.ObjectId,
+    required: false,
+    immutable: true,
+    ref: "movieGroup",
+  },
   status: {
     type: Boolean,
     required: false,
