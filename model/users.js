@@ -43,6 +43,13 @@ const userSchema = new mongoose.Schema({
       ref: "movieGroup",
     },
   ],
+  wishlist: [
+    {
+      type: mongoose.Schema.Types.ObjectId,
+      required: true,
+      ref: "movieGroup",
+    },
+  ],
   join_date: {
     type: Date,
     default: Date.now(),

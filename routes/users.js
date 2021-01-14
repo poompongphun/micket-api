@@ -7,11 +7,15 @@ const bcrypt = require("bcryptjs");
 // Model
 const users = require("../model/users");
 const movieSeason = require("../model/movieSeason");
+const movieGroup = require("../model/movieGroup");
 
 /* GET User data. */
 router.get("/me", verify, async (req, res, next) => {
   try {
-    const user = await users.findById(req.user._id).select({ password: 0 });
+    const user = await users
+      .findById(req.user._id)
+      .populate({ path: "wishlist", select: "poster title description" })
+      .select({ password: 0 });
     res.json(user);
   } catch (error) {
     res.status(400).send(error);
@@ -82,6 +86,45 @@ router.get("/me/library/:id", verify, async (req, res) => {
       })
       .select("name");
     res.json(responseSeason);
+  } catch (error) {
+    res.status(400).send(error);
+  }
+});
+
+// add movie group to wishlist
+router.post("/me/wishlist/:id", verify, async (req, res) => {
+  try {
+    const responseMovie = await movieGroup.findById(req.params.id);
+    if (responseMovie) {
+      const user = await users
+        .findByIdAndUpdate(
+          req.user._id,
+          { $addToSet: { wishlist: responseMovie._id } },
+          {
+            new: true,
+          }
+        )
+        .populate({ path: "wishlist", select: "poster title description" })
+        .select("wishlist");
+      res.json(user.wishlist[0]);
+    }
+  } catch (error) {
+    res.status(400).send(error);
+  }
+});
+
+router.delete("/me/wishlist/:id", verify, async (req, res) => {
+  try {
+    const user = await users
+      .findByIdAndUpdate(
+        req.user._id,
+        { $pull: { wishlist: req.params.id } },
+        {
+          new: true,
+        }
+      )
+      .select({ password: 0 });
+    res.json(user);
   } catch (error) {
     res.status(400).send(error);
   }
