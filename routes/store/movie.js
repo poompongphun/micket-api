@@ -50,7 +50,7 @@ router.get("/:id", noVerify, async (req, res) => {
       .populate({ path: "user_id", select: "name" })
       .lean();
 
-    if (response) {
+    if (response && req.user) {
       // reduce price in user have some movie in this group
       const findPrice = await movie
         .find({
