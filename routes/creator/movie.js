@@ -186,6 +186,35 @@ router.patch("/:id", verifyCreator, async (req, res) => {
   }
 });
 
+router.get("/:id/users", verifyCreator, async (req, res) => {
+  try {
+    const responseOwnedUsers = await movie
+      .findById(req.params.id)
+      .populate({ path: "purchase_user", select: "name" })
+      .select("purchase_user");
+    res.json(responseOwnedUsers);
+  } catch (error) {
+    res.status(400).send(error);
+  }
+});
+
+router.delete("/:id/users/:user", verifyCreator, async (req, res) => {
+  try {
+    const responseOwnedUsers = await movie
+      .findOneAndUpdate(
+        { _id: req.params.id, user_id: req.user._id },
+        {
+          $pull: { purchase_user: req.params.user },
+        }
+      )
+      .populate({ path: "purchase_user", select: "name" })
+      .select("purchase_user");
+    res.json(responseOwnedUsers);
+  } catch (error) {
+    res.status(400).send(error);
+  }
+});
+
 async function updateGroupPrice(groupId) {
   try {
     const findPrice = await movie
