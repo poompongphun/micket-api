@@ -54,10 +54,21 @@ const movieGroupSchema = new mongoose.Schema({
     required: false,
     default: 0,
   },
-  rating: {
-    type: Object,
-    required: false,
-  },
+  like: [
+    {
+      _id: false,
+      user_id: {
+        type: mongoose.Schema.Types.ObjectId,
+        required: true,
+        immutable: true,
+        ref: "users",
+      },
+      islike: {
+        type: Boolean,
+        required: false,
+      },
+    },
+  ],
   public: {
     type: Boolean,
     required: false,

@@ -9,7 +9,7 @@ const movieSeason = require("../../model/movieSeason");
 const movie = require("../../model/movie");
 const users = require("../../model/users");
 
-// Get all public movie 
+// Get all public movie
 router.get("/", async (req, res) => {
   try {
     const response = await movieGroup
@@ -87,10 +87,122 @@ router.get("/:id", noVerify, async (req, res) => {
     const owned = responseSeason.every((season) => season.movie.length === 0);
     const movieOwn = Object.assign(response, { isOwned: owned });
 
+    // count like/dislike and check user like
+    const isLike =
+      response.like.length !== 0 &&
+      req.user &&
+      response.user_id._id != req.user._id 
+        ? response.like.filter((like) => like.user_id == req.user._id)
+        : null;
+    const like = response.like.filter((like) => like.islike == true);
+    const dislike = response.like.filter((like) => like.islike == false);
+    console.log(isLike);
+    const likeDetail = {
+      islike:
+        response.like.length !== 0 &&
+        req.user &&
+        response.user_id._id != req.user._id 
+          ? isLike.length !== 0
+            ? isLike[0].islike
+            : null
+          : isLike,
+      like: like.length,
+      dislike: dislike.length,
+    };
+    movieOwn.like = likeDetail;
+
     res.json({ movie: movieOwn, season: responseSeason });
   } catch (error) {
     res.status(400).send(error);
   }
 });
+
+// like by group id
+router.post("/:id/like", verify, async (req, res) => {
+  try {
+    const responseMovie = await movie
+      .find({ group_id: req.params.id, purchase_user: { $in: req.user._id } })
+      .select("purchase_user");
+    if (responseMovie.length !== 0) {
+      const checkLike = await dolikeGroup(req.params.id, req.user._id, true);
+      res.json("liked");
+    } else res.status(400).send("you need to buy movie frist");
+  } catch (error) {
+    res.status(400).send(error);
+  }
+});
+
+// dislike by group id
+router.post("/:id/dislike", verify, async (req, res) => {
+  try {
+    const responseMovie = await movie
+      .find({ group_id: req.params.id, purchase_user: { $in: req.user._id } })
+      .select("purchase_user");
+    if (responseMovie.length !== 0) {
+      const checkLike = await dolikeGroup(req.params.id, req.user._id, false);
+      res.json("disliked");
+    } else res.status(400).send("you need to buy movie frist");
+  } catch (error) {
+    res.status(400).send(error);
+  }
+});
+
+// dislike by group id
+router.delete("/:id/removelike", verify, async (req, res) => {
+  try {
+    const responseMovie = await movie
+      .find({ group_id: req.params.id, purchase_user: { $in: req.user._id } })
+      .select("purchase_user");
+    if (responseMovie.length !== 0) {
+      const checkLike = await movieGroup.findOneAndUpdate(
+        {
+          _id: req.params.id,
+          "like.user_id": { $in: req.user._id },
+        },
+        { $pull: { like: { user_id: req.user._id } } },
+        {
+          new: true,
+          useFindAndModify: false,
+        }
+      );
+      res.json("removed like");
+    } else res.status(400).send("you need to buy movie frist");
+  } catch (error) {
+    res.status(400).send(error);
+  }
+});
+
+async function dolikeGroup(id, user_id, islike) {
+  const option = {
+    new: true,
+    useFindAndModify: false,
+  };
+  const find = await movieGroup.findOne({
+    _id: id,
+    "like.user_id": { $in: user_id },
+  });
+  if (find) {
+    const updateLike = await movieGroup.findOneAndUpdate(
+      {
+        _id: id,
+        "like.user_id": { $in: user_id },
+      },
+      {
+        $set: { "like.$.islike": islike },
+      },
+      option
+    );
+    return updateLike;
+  } else {
+    const addLike = await movieGroup.findByIdAndUpdate(
+      id,
+      {
+        $addToSet: { like: { user_id: user_id, islike: islike } },
+      },
+      option
+    );
+    return addLike;
+  }
+}
 
 module.exports = router;
