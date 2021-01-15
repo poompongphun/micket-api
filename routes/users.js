@@ -8,6 +8,7 @@ const bcrypt = require("bcryptjs");
 const users = require("../model/users");
 const movieSeason = require("../model/movieSeason");
 const movieGroup = require("../model/movieGroup");
+const bill = require("../model/bill");
 
 /* GET User data. */
 router.get("/me", verify, async (req, res, next) => {
@@ -125,6 +126,18 @@ router.delete("/me/wishlist/:id", verify, async (req, res) => {
       )
       .select({ password: 0 });
     res.json(user);
+  } catch (error) {
+    res.status(400).send(error);
+  }
+});
+
+router.get("/me/bill", verify, async (req, res) => {
+  try {
+    const bills = await bill
+      .find({ user_id: req.user._id })
+      .populate({ path: "order", select: "media name" })
+      .populate({ path: "order_group", select: "poster title" });
+    res.json(bills);
   } catch (error) {
     res.status(400).send(error);
   }
