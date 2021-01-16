@@ -2,7 +2,7 @@ name: Deploy to Google App Engine
 on:
   push:
     branches:
-      - master
+      - main
 jobs:
   build:
     name: Google App Engine Deploy
