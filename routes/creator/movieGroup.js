@@ -13,10 +13,10 @@ const {
 const movieGroup = require("../../model/movieGroup");
 const movieSeason = require("../../model/movieSeason");
 const movies = require("../../model/movie");
+const users = require("../../model/users");
 
 // Firebase Setup
 const { firebaseApp } = require("../../firebaseConfig");
-const movie = require("../../model/movie");
 const storage = firebaseApp.storage();
 const bucket = storage.bucket();
 
@@ -89,19 +89,30 @@ router.patch("/:id", verifyCreator, async (req, res) => {
 // Delete Movie Group
 router.delete("/:id", verifyCreator, async (req, res) => {
   try {
+    const groupId = req.params.id
+    const userId = req.user._id
     const response = await movieGroup.findOneAndDelete({
-      _id: req.params.id,
-      user_id: req.user._id,
+      _id: groupId,
+      user_id: userId,
     });
     const responseSeason = await movieSeason.deleteMany({
-      group_id: req.params.id,
-      user_id: req.user._id,
+      group_id: groupId,
+      user_id: userId,
     });
     const responseMovie = await movies.deleteMany({
-      group_id: req.params.id,
-      user_id: req.user._id,
+      group_id: groupId,
+      user_id: userId,
     });
-    if (response && responseSeason && responseMovie) {
+    const responseUser = await users.updateMany(
+      {
+        $or: [
+          { library: { $in: groupId } },
+          { wishlist: { $in: groupId } },
+        ],
+      },
+      { $pull: { library: groupId }, $pull: { wishlist: groupId } }
+    );
+    if (response && responseSeason && responseMovie && responseUser) {
       const folder = "movie";
       const id = response._id;
       console.log(id);
