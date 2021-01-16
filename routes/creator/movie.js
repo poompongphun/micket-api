@@ -25,6 +25,7 @@ const uploadMovie = upload.single("movie");
 
 // Setup Firebase
 const { firebaseApp } = require("../../firebaseConfig");
+const users = require("../../model/users");
 const storage = firebaseApp.storage();
 const bucket = storage.bucket();
 
@@ -198,6 +199,7 @@ router.get("/:id/users", verifyCreator, async (req, res) => {
   }
 });
 
+// delete owned user
 router.delete("/:id/users/:user", verifyCreator, async (req, res) => {
   try {
     const responseOwnedUsers = await movie
@@ -205,10 +207,23 @@ router.delete("/:id/users/:user", verifyCreator, async (req, res) => {
         { _id: req.params.id, user_id: req.user._id },
         {
           $pull: { purchase_user: req.params.user },
-        }
+        },
+        { new: true }
       )
       .populate({ path: "purchase_user", select: "name" })
-      .select("purchase_user");
+      .select("purchase_user group_id");
+
+    // Check if no more movie then remove groupid from user library
+    const checkUserMovie = await movie.find({
+      purchase_user: { $all: req.params.user },
+      group_id: responseOwnedUsers.group_id,
+    });
+    if (checkUserMovie.length === 0) {
+      await users.findByIdAndUpdate(req.params.user, {
+        $pull: { library: responseOwnedUsers.group_id },
+      });
+    }
+    
     res.json(responseOwnedUsers);
   } catch (error) {
     res.status(400).send(error);
