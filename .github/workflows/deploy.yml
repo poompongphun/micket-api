@@ -8,6 +8,9 @@ jobs:
     name: Google App Engine Deploy
     runs-on: ubuntu-latest
     steps:
+      - name: Checkout the repository
+        uses: actions/checkout@master
+
       - name: Initialize Google Cloud SDK
         uses: zxyle/publish-gae-action@master
         with:
@@ -17,6 +20,13 @@ jobs:
           # An optional variables parameter can be used
           gae_variables: ${{ secrets.GAE_VARIABLES }}
           gae_config_path: ./my/neseted/package/app.yml 
+          
+      - name: Install Dependecies
+        run: |
+          npm install
+
+      - name: Build
+        run: npm run build
 
       - name: Publish app to Google App Engine
         run: |
@@ -24,6 +34,3 @@ jobs:
           gcloud auth activate-service-account ${{ secrets.SERVICE_ACCOUNT_EMAIL }} --key-file=client-secret.json
           gcloud config set project ${{ secrets.PROJECT_ID }}
           gcloud -q app deploy app.yaml --promote
-
-          # Suppose you need a cron task.
-          # gcloud -q app deploy cron.yaml
