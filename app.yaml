@@ -13,18 +13,4 @@
 
 # [START gae_quickstart_yaml]
 runtime: nodejs14
-
-env_variables:
-  DB_CONNECT: ${{ secrets.DB_CONNECT }}
-  SECRET_KEY: ${{ secrets.SECRET_KEY }}
-  PAYPAL_CLIENT_ID: ${{ secrets.PAYPAL_CLIENT_ID }}
-  PAYPAL_SECRET: ${{ secrets.PAYPAL_SECRET }}
-  PAYPAL_API: ${{ secrets.PAYPAL_API }}
-
-  FIREBASE_PROJECT_ID: ${{ secrets.FIREBASE_PROJECT_ID }}
-  FIREBASE_PRIVATE_KEY_ID: ${{ secrets.FIREBASE_PRIVATE_KEY_ID }}
-  FIREBASE_PRIVATE_KEY: ${{ secrets.FIREBASE_PRIVATE_KEY }}
-  FIREBASE_CLIENT_EMAIL: ${{ secrets.FIREBASE_CLIENT_EMAIL }}
-  FIREBASE_CLIENT_ID: ${{ secrets.FIREBASE_CLIENT_ID }}
-  FIREBASE_CLIENT_CERT_URL: ${{ secrets.FIREBASE_CLIENT_CERT_URL }}
 # [END gae_quickstart_yaml]
