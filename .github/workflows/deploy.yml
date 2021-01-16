@@ -1,0 +1,14 @@
+name: Deploy to Google App Engine
+on:
+  push:
+    branches:
+      - master
+jobs:
+  build:
+    name: GAE Deploy
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - uses: GoogleCloudPlatform/github-actions/appengine-deploy@master
+        with:
+          credentials: ${{ secrets.gcp_credentials }}
