@@ -67,7 +67,7 @@ router.get("/me/library", verify, async (req, res) => {
     const library = await users
       .findById(req.user._id)
       .select("library")
-      .populate("library");
+      .populate({ path: "library", select: "detail title description poster" });
     res.json(library);
   } catch (error) {
     res.status(400).send(error);
