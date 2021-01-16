@@ -10,7 +10,7 @@ const movie = require("../../model/movie");
 const users = require("../../model/users");
 
 // Get all public movie
-router.get("/", async (req, res) => {
+router.get("/", noVerify, async (req, res) => {
   try {
     const response = await movieGroup
       .find({
@@ -29,6 +29,10 @@ router.get("/", async (req, res) => {
           .select("library");
         const movieObject = Object.assign({}, movie);
         movieObject.owned_user = ownedUser.length;
+
+        // count like/dislike and check user like
+        movieObject.like = countLike(movie, req.user);
+
         return movieObject;
       })
     );
@@ -88,28 +92,7 @@ router.get("/:id", noVerify, async (req, res) => {
     const movieOwn = Object.assign(response, { isOwned: owned });
 
     // count like/dislike and check user like
-    const isLike =
-      response.like.length !== 0 &&
-      req.user &&
-      response.user_id._id != req.user._id 
-        ? response.like.filter((like) => like.user_id == req.user._id)
-        : null;
-    const like = response.like.filter((like) => like.islike == true);
-    const dislike = response.like.filter((like) => like.islike == false);
-    console.log(isLike);
-    const likeDetail = {
-      islike:
-        response.like.length !== 0 &&
-        req.user &&
-        response.user_id._id != req.user._id 
-          ? isLike.length !== 0
-            ? isLike[0].islike
-            : null
-          : isLike,
-      like: like.length,
-      dislike: dislike.length,
-    };
-    movieOwn.like = likeDetail;
+    movieOwn.like = countLike(response, req.user);
 
     res.json({ movie: movieOwn, season: responseSeason });
   } catch (error) {
@@ -203,6 +186,31 @@ async function dolikeGroup(id, user_id, islike) {
     );
     return addLike;
   }
+}
+
+function countLike(movieGroup, reqUser) {
+  const isLike =
+    movieGroup.like.length !== 0 &&
+    reqUser &&
+    movieGroup.user_id._id != reqUser._id
+      ? movieGroup.like.filter((like) => like.user_id == reqUser._id)
+      : null;
+  const like = movieGroup.like.filter((like) => like.islike == true);
+  const dislike = movieGroup.like.filter((like) => like.islike == false);
+  console.log(isLike);
+  const likeDetail = {
+    islike:
+      movieGroup.like.length !== 0 &&
+      reqUser &&
+      movieGroup.user_id._id != reqUser._id
+        ? isLike.length !== 0
+          ? isLike[0].islike
+          : null
+        : isLike,
+    like: like.length,
+    dislike: dislike.length,
+  };
+  return likeDetail
 }
 
 module.exports = router;
