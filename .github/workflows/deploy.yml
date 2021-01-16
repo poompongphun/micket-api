@@ -16,6 +16,7 @@ jobs:
           project_id: ${{ secrets.PROJECT_ID }}
           # An optional variables parameter can be used
           gae_variables: ${{ secrets.GAE_VARIABLES }}
+          gae_config_path: ./my/neseted/package/app.yml 
 
       - name: Publish app to Google App Engine
         run: |
