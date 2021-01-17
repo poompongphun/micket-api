@@ -26,6 +26,11 @@ const userSchema = new mongoose.Schema({
     min: 6,
     max: 255,
   },
+  description: {
+    type: String,
+    required: false,
+    max: 1024,
+  },
   coins: {
     type: Number,
     required: false,

@@ -22,9 +22,11 @@ const editUserValidation = (data) => {
       .max(128)
       .pattern(new RegExp("^[a-zA-Z0-9]+$"))
       .lowercase(),
-    name: Joi.string().max(128).replace(/  +/g, " "),
-    email: Joi.string().min(6).email().lowercase(),
-    password: Joi.string().min(6).max(128),
+    name: Joi.string().max(128).replace(/  +/g, " ").empty(""),
+    description: Joi.string().max(1024).replace(/  +/g, " ").empty(""),
+    // email: Joi.string().min(6).email().lowercase(),
+    // password: Joi.string().min(6).max(128),
+    // newPassword: Joi.string().min(6).max(128),
   });
   return schema.validate(data);
 };

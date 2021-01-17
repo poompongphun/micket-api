@@ -30,31 +30,34 @@ router.patch("/me", verify, async (req, res, next) => {
     return res.status(400).send(validation.error.details[0].message);
   else {
     // check duplicate email / username
-    const emailExist = await users.findOne({ email: validation.value.email });
+    // const emailExist = await users.findOne({ email: validation.value.email });
     const usernameExist = await users.findOne({
       username: validation.value.username,
     });
-    if (emailExist) return res.status(400).send("Email already exists");
-    else if (usernameExist)
+    // if (emailExist) return res.status(400).send("Email already exists");
+    if (usernameExist && usernameExist._id != req.user._id)
       return res.status(400).send("Username already exists");
 
+    if (validation.value.description === undefined)
+      validation.value.description = "";
+
+    if (validation.value.name === undefined)
+      validation.value.name = validation.value.username;
     // Hash password
-    if (validation.value.hasOwnProperty("password")) {
-      const salt = await bcrypt.genSalt(10);
-      validation.value.password = await bcrypt.hash(
-        validation.value.password,
-        salt
-      );
-    }
+    // if (validation.value.hasOwnProperty("password")) {
+    //   const salt = await bcrypt.genSalt(10);
+    //   validation.value.password = await bcrypt.hash(
+    //     validation.value.password,
+    //     salt
+    //   );
+    // }
 
     try {
-      const user = await users.findByIdAndUpdate(
-        req.user._id,
-        validation.value,
-        {
+      const user = await users
+        .findByIdAndUpdate(req.user._id, validation.value, {
           new: true,
-        }
-      );
+        })
+        .select("username name description");
       res.send(user);
     } catch (error) {
       res.status(400).send(error);
