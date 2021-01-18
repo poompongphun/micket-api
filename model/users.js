@@ -26,6 +26,10 @@ const userSchema = new mongoose.Schema({
     min: 6,
     max: 255,
   },
+  profile: {
+    type: String,
+    required: false,
+  },
   description: {
     type: String,
     required: false,

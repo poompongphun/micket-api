@@ -4,6 +4,27 @@ const verify = require("../Middleware/verifyToken");
 const { editUserValidation } = require("../validation");
 const bcrypt = require("bcryptjs");
 
+const path = require("path");
+const sharp = require("sharp");
+
+//Multer Setup
+const multer = require("multer");
+const uploadImg = multer({
+  storage: multer.memoryStorage(),
+  limits: {
+    files: 1,
+  },
+  fileFilter: function (_req, file, cb) {
+    checkImagesType(file, cb);
+  },
+});
+const uploadProfile = uploadImg.single("profile");
+
+// Setup Firebase
+const { firebaseApp } = require("../firebaseConfig");
+const storage = firebaseApp.storage();
+const bucket = storage.bucket();
+
 // Model
 const users = require("../model/users");
 const movieSeason = require("../model/movieSeason");
@@ -145,5 +166,87 @@ router.get("/me/bill", verify, async (req, res) => {
     res.status(400).send(error);
   }
 });
+
+router.post("/me/profile", verify, async (req, res) => {
+  try {
+    const response = await users.findById(req.user._id);
+    if (response) {
+      uploadProfile(req, res, async (error) => {
+        if (error instanceof multer.MulterError) {
+          // A Multer error occurred when uploading.
+          res.status(405).json({ error });
+        } else if (error) {
+          // An unknown error occurred when uploading.
+          res.status(405).json({ error });
+        } else {
+          const width = 256;
+          const height = 256;
+          const file = req.file.buffer;
+          const sharpOption = {
+            quality: 20,
+            chromaSubsampling: "4:4:4",
+          };
+          const img = await sharp(file)
+            .resize(width, height)
+            .webp(sharpOption)
+            .toBuffer();
+
+          const folder = "profile";
+          const fileName = `${Date.now()}.webp`;
+          const path = `${folder}/${response._id}/${fileName}`;
+          const fileUpload = bucket.file(path);
+          const blobStream = fileUpload.createWriteStream({
+            metadata: {
+              contentType: "image/webp",
+            },
+          });
+
+          blobStream.on("error", (error) => {
+            res.status(405).json(error);
+          });
+
+          blobStream.on("finish", async () => {
+            const url = fileUpload.publicUrl();
+
+            try {
+              const updateResponse = await users
+                .findByIdAndUpdate(
+                  response._id,
+                  { profile: url },
+                  {
+                    new: true,
+                  }
+                )
+                .select("profile");
+
+              res.json(updateResponse);
+            } catch (error) {
+              res.status(500).send(error);
+            }
+          });
+
+          blobStream.end(img);
+        }
+      });
+    }
+  } catch (error) {
+    res.status(400).send(error);
+  }
+});
+
+function checkImagesType(file, cb) {
+  // Allowed ext
+  const filetypes = /jpeg|jpg|png|tiff|gif|bmp|webp/;
+  // Check ext
+  const extname = filetypes.test(path.extname(file.originalname).toLowerCase());
+  // Check mime
+  const mimetype = filetypes.test(file.mimetype);
+
+  if (mimetype && extname) {
+    return cb(null, true);
+  } else {
+    return cb("Allow jpeg,jpg,png,tiff,gif,bmp,webp Only!");
+  }
+}
 
 module.exports = router;
