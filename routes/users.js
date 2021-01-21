@@ -1,7 +1,10 @@
 const express = require("express");
 const router = express.Router();
 const verify = require("../Middleware/verifyToken");
-const { editUserValidation } = require("../validation");
+const {
+  editUserValidation,
+  editUserPasswordValidation,
+} = require("../validation");
 const bcrypt = require("bcryptjs");
 
 const path = require("path");
@@ -231,6 +234,46 @@ router.post("/me/profile", verify, async (req, res) => {
     }
   } catch (error) {
     res.status(400).send(error);
+  }
+});
+
+router.post("/me/password", verify, async (req, res) => {
+  const validation = editUserPasswordValidation(req.body);
+  if (validation.hasOwnProperty("error"))
+    return res.status(400).send(validation.error.details[0].message);
+  else {
+    try {
+      const user = await users.findById(req.user._id);
+      if (user) {
+        const errorMessage = "Password is wrong";
+        // Check Password
+        const validPass = await bcrypt.compare(
+          req.body.password,
+          user.password
+        );
+        if (validPass) {
+          // Hash Password
+          const salt = await bcrypt.genSalt(10);
+          validation.value.newPassword = await bcrypt.hash(
+            validation.value.newPassword,
+            salt
+          );
+
+          const responseUser = await users
+            .findByIdAndUpdate(
+              req.user._id,
+              { password: validation.value.newPassword },
+              {
+                new: true,
+              }
+            )
+            .select({ password: 0 });
+          res.send("Changed Password");
+        } else return res.status(400).send(errorMessage);
+      }
+    } catch (error) {
+      res.json(error);
+    }
   }
 });
 

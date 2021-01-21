@@ -25,8 +25,14 @@ const editUserValidation = (data) => {
     name: Joi.string().max(128).replace(/  +/g, " ").empty(""),
     description: Joi.string().max(1024).replace(/  +/g, " ").empty(""),
     // email: Joi.string().min(6).email().lowercase(),
-    // password: Joi.string().min(6).max(128),
-    // newPassword: Joi.string().min(6).max(128),
+  });
+  return schema.validate(data);
+};
+
+const editUserPasswordValidation = (data) => {
+  const schema = Joi.object({
+    password: Joi.string(),
+    newPassword: Joi.string().min(6).max(128),
   });
   return schema.validate(data);
 };
@@ -69,6 +75,7 @@ const movieValidation = (data) => {
 
 module.exports.registerValidation = registerValidation;
 module.exports.editUserValidation = editUserValidation;
+module.exports.editUserPasswordValidation = editUserPasswordValidation;
 module.exports.movieGroupValidation = movieGroupValidation;
 module.exports.editMovieGroupValidation = editMovieGroupValidation;
 module.exports.movieValidation = movieValidation;
