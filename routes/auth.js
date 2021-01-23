@@ -5,6 +5,9 @@ const users = require("../model/users");
 const bcrypt = require("bcryptjs");
 const { registerValidation } = require("../validation");
 
+const codeDigit = require("../model/codeDigit");
+const nodemailer = require("nodemailer");
+
 /* GET users listing. */
 router.post("/register", async (req, res, next) => {
   // Validate
@@ -81,5 +84,102 @@ router.get("/email", async (req, res) => {
     res.json({ isAvailable: false });
   } else res.json({ isAvailable: true });
 });
+
+router.post("/forgot", async (req, res) => {
+  try {
+    const responseUser = await users.findOne({ email: req.body.email });
+    if (responseUser) {
+      const random = Math.floor(100000 + Math.random() * 900000);
+      const responseCode = await codeDigit.findOneAndUpdate(
+        { user_id: responseUser._id },
+        { code: random.toString() },
+        { new: true, upsert: true }
+      );
+      if (responseCode) {
+        const title = "Recovery Micket Code";
+        const email = responseUser.email;
+        const code = responseCode.code;
+        const subject = `${code} is your code`;
+        const text = `Your code is ${code}`;
+        const html = `Your code is <b>${code}</b>`;
+        const sendMails = sendMail(title, email, subject, text, html);
+        if (sendMails) {
+          res.send("send email");
+        }
+      }
+    } else res.status(400).send("not found email");
+  } catch (error) {
+    res.status(400).send(error);
+  }
+});
+
+router.post("/forgot/code", async (req, res) => {
+  try {
+    const responseUser = await users.findOne({ email: req.body.email });
+    if (responseUser) {
+      const responseCode = await codeDigit.findOne({
+        user_id: responseUser._id,
+        code: req.body.code,
+      });
+      if (responseCode) {
+        res.json({ code: true });
+      } else res.status(400).send("wrong code");
+    } else res.status(400).send("not found email");
+  } catch (error) {
+    res.status(400).send(error);
+  }
+});
+
+router.post("/forgot/password", async (req, res) => {
+  try {
+    const responseUser = await users.findOne({ email: req.body.email });
+    const responseCode = await codeDigit.findOne({
+      user_id: responseUser._id,
+      code: req.body.code,
+    });
+    if (responseUser && responseCode) {
+      // Hash Password
+      const salt = await bcrypt.genSalt(10);
+      const newPass = await bcrypt.hash(req.body.newPassword, salt);
+
+      await users
+        .findByIdAndUpdate(
+          responseUser._id,
+          { password: newPass },
+          {
+            new: true,
+          }
+        )
+        .select({ password: 0 });
+      res.send("Changed Password");
+    } else res.status(400).send("Something went wrong");
+  } catch (error) {
+    res.status(400).send(error);
+  }
+});
+
+async function sendMail(title, sendTo, subject, text, htmlText) {
+  let transporter = nodemailer.createTransport({
+    host: "smtp.gmail.com",
+    port: 465,
+    secure: true,
+    auth: {
+      user: process.env.MAIL_NAME,
+      pass: process.env.MAIL_PASSWORD,
+    },
+  });
+
+  // send mail with defined transport object
+  let info = await transporter.sendMail({
+    from: `${title} <${process.env.MAIL_NAME}>`, // sender address
+    to: sendTo, // list of receivers
+    subject: subject, // Subject line
+    text: text, // plain text body
+    html: htmlText, // html body
+  });
+
+  console.log("Message sent: %s", info.messageId);
+  return info.messageId;
+}
 
 module.exports = router;
