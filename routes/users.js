@@ -4,6 +4,7 @@ const verify = require("../Middleware/verifyToken");
 const {
   editUserValidation,
   editUserPasswordValidation,
+  editUserEmailValidation,
 } = require("../validation");
 const bcrypt = require("bcryptjs");
 
@@ -270,6 +271,35 @@ router.post("/me/password", verify, async (req, res) => {
             .select({ password: 0 });
           res.send("Changed Password");
         } else return res.status(400).send(errorMessage);
+      }
+    } catch (error) {
+      res.json(error);
+    }
+  }
+});
+
+router.post("/me/email", verify, async (req, res) => {
+  const validation = editUserEmailValidation(req.body);
+  if (validation.hasOwnProperty("error"))
+    return res.status(400).send(validation.error.details[0].message);
+  else {
+    try {
+      const user = await users.findById(req.user._id);
+      if (user) {
+        if (user.email === validation.value.email)
+          return res.status(200).send("This is your mail");
+
+        const emailExist = await users.findOne({
+          email: validation.value.email,
+        });
+        if (emailExist) return res.status(400).send("Email already exists");
+
+        const updateMail = await users
+          .findByIdAndUpdate(req.user._id, validation.value, {
+            new: true,
+          })
+          .select("email");
+        res.send(updateMail);
       }
     } catch (error) {
       res.json(error);
