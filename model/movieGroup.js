@@ -80,4 +80,5 @@ const movieGroupSchema = new mongoose.Schema({
   },
 });
 
+movieGroupSchema.index({ title: "text" });
 module.exports = mongoose.model("movieGroup", movieGroupSchema);

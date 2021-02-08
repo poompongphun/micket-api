@@ -12,10 +12,18 @@ const users = require("../../model/users");
 // Get all public movie
 router.get("/", noVerify, async (req, res) => {
   try {
+    const querySearch = req.query.search;
+    const search =
+      querySearch !== "" && querySearch !== undefined
+        ? {
+            public: true,
+            $text: { $search: querySearch },
+          }
+        : {
+            public: true,
+          };
     const response = await movieGroup
-      .find({
-        public: true,
-      })
+      .find(search)
       .populate({ path: "user_id", select: "name" })
       .lean();
 
@@ -210,7 +218,7 @@ function countLike(movieGroup, reqUser) {
     like: like.length,
     dislike: dislike.length,
   };
-  return likeDetail
+  return likeDetail;
 }
 
 module.exports = router;
