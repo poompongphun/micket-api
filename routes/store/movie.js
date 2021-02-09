@@ -14,10 +14,10 @@ router.get("/", noVerify, async (req, res) => {
   try {
     const querySearch = req.query.search;
     const search =
-      querySearch !== "" && querySearch !== undefined
+      querySearch !== undefined
         ? {
             public: true,
-            $text: { $search: querySearch },
+            title: { $regex: querySearch },
           }
         : {
             public: true,
