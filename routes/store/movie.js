@@ -17,7 +17,7 @@ router.get("/", noVerify, async (req, res) => {
       querySearch !== undefined
         ? {
             public: true,
-            title: { $regex: querySearch },
+            title: { $regex: new RegExp(querySearch, "i") },
           }
         : {
             public: true,
