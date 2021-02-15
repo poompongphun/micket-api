@@ -13,7 +13,16 @@ const movieSeason = require("../../model/movieSeason");
 //Multer
 const multer = require("multer");
 const upload = multer({
-  storage: multer.memoryStorage(),
+  storage: multer.diskStorage({
+    destination: function (req, file, cb) {
+      console.log("Hello people in storage");
+      return cb(null, "public/images");
+    },
+    filename: function (req, file, cb) {
+      var ext = file.mimetype.split("/")[1];
+      return cb(null, Date.now() + "." + ext);
+    },
+  }),
   limits: {
     files: 1,
   },
@@ -223,7 +232,7 @@ router.delete("/:id/users/:user", verifyCreator, async (req, res) => {
         $pull: { library: responseOwnedUsers.group_id },
       });
     }
-    
+
     res.json(responseOwnedUsers);
   } catch (error) {
     res.status(400).send(error);
